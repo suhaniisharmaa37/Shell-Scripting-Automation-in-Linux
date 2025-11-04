@@ -130,8 +130,8 @@ Instructor: **Mr. Rajat Kapoor**
 ---
 
 ## 🌐 **References**
-- [GitHub Repository](https://github.com/yourusername/system-maintenance-automation)  
-- [LinkedIn Profile](https://www.linkedin.com/in/your-linkedin-id)
+- [GitHub Repository](https://github.com/suhaniisharmaa37/Shell-Scripting-Automation-in-Linux/tree/main)
+- [LinkedIn Profile](#)
 
 ---
 
