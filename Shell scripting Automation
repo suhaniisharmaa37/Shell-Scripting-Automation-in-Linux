@@ -1,0 +1,78 @@
+#!/bin/bash
+# system_maintenance_automation.sh
+# Automates server setup (Apache, NGINX, MySQL, DNS, FTP) and system maintenance tasks.
+
+LOG="/var/log/system_maintenance_automation.log"
+echo "----- System Maintenance Automation -----" | tee -a $LOG
+
+# Confirm
+read -p "Proceed with full system setup and maintenance automation? (y/n) " confirm
+if [[ $confirm != [yY] ]]; then
+    echo "Aborting script." | tee -a $LOG
+    exit 1
+fi
+
+# Update packages
+echo "Updating packages..." | tee -a $LOG
+sudo apt update -y | tee -a $LOG
+
+# Apache Installation
+echo "Installing Apache..." | tee -a $LOG
+sudo apt install apache2 -y | tee -a $LOG
+sudo systemctl enable apache2 | tee -a $LOG
+sudo systemctl start apache2 | tee -a $LOG
+sudo chown -R www-data:www-data /var/www/html | tee -a $LOG
+sudo chmod -R 755 /var/www/html | tee -a $LOG
+
+# NGINX Installation
+echo "Installing NGINX..." | tee -a $LOG
+sudo apt install nginx -y | tee -a $LOG
+sudo systemctl enable nginx | tee -a $LOG
+sudo systemctl start nginx | tee -a $LOG
+
+# MySQL Installation and Secure Setup
+echo "Installing MySQL..." | tee -a $LOG
+sudo apt install mysql-server -y | tee -a $LOG
+sudo systemctl enable mysql | tee -a $LOG
+sudo systemctl start mysql | tee -a $LOG
+echo -e "\nY\npassword123\npassword123\nY\nY\nY\nY\n" | sudo mysql_secure_installation | tee -a $LOG
+
+# DNS Server (Bind9) Installation
+echo "Installing Bind9 DNS server..." | tee -a $LOG
+sudo apt install bind9 -y | tee -a $LOG
+sudo systemctl enable bind9 | tee -a $LOG
+sudo systemctl start bind9 | tee -a $LOG
+
+# FTP Server (vsftpd) Installation
+echo "Installing FTP server..." | tee -a $LOG
+sudo apt install vsftpd -y | tee -a $LOG
+sudo systemctl enable vsftpd | tee -a $LOG
+sudo systemctl start vsftpd | tee -a $LOG
+
+# System Maintenance Tasks
+echo "Running disk space check..." | tee -a $LOG
+df -h | tee -a $LOG
+
+echo "Cleaning old log files..." | tee -a $LOG
+sudo find /var/log/ -type f -name "*.log" -mtime +30 -delete | tee -a $LOG
+
+echo "Restarting web services..." | tee -a $LOG
+sudo systemctl restart apache2 | tee -a $LOG
+sudo systemctl restart nginx | tee -a $LOG
+
+echo "Running backup with rsync..." | tee -a $LOG
+sudo mkdir -p /backup/apache_www_backup
+sudo rsync -av /var/www/html /backup/apache_www_backup/ | tee -a $LOG
+
+echo "All main server components and routine maintenance tasks completed." | tee -a $LOG
+
+# Scheduling daily maintenance (add to crontab)
+CRONJOB="0 0 * * * /bin/bash $(pwd)/system_maintenance_automation.sh"
+(crontab -l ; echo "$CRONJOB") | sort - | uniq - | crontab -
+echo "Daily maintenance job scheduled in crontab." | tee -a $LOG
+
+# Send report (requires mailutils/mailx configured)
+# Uncomment the next line after configuring email
+# mailx -a $LOG -s "Daily System Maintenance Report" sysadmin@example.com
+
+echo "----- Script Finished -----" | tee -a $LOG
